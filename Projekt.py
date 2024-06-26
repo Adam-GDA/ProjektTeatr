@@ -1,130 +1,132 @@
 #klasa Miejsca Teatralne
 #Klasa bazowa
 
-class MiejscaTeatralne:
-    def __init__(self,numer,cena):
-        self.numer = numer
-        self.cena = cena
-        self.dostepnosc = True
-        self.klient = None
-
-#zezerwacja i anulowanie rezerwacji
-
-    def rezerwacja(self, klient):
-        if self.dostepnosc:
-            self.dostepnosc = False
-            self.klient = klient
-            klient.zarezerwuj_miejsce(self)
-            return True
-        return False
-
-    def anulowanie_rezerwacji(self):
-        if not self.dostepnosc:
-            self.dostepnosc = True
-            klient = self.klient
-            self.klient = None
-            klient.anuluj_rezerwacje(self)
-            return True
-        return False
+class TheaterSeats:
+    def __init__(self,number,price,availability):
+        self.number = number
+        self.price = price
+        self.availability = availability
 
     def __str__(self):
-        return f"Miejsce numer {self.numer}, Cena: {self.cena}, Dostępność: {"Dostępne" if self.dostepnosc else "Zarezerwowane"}"
+        return f"Seat number {self.number}, Price: {self.price}, Availability: {"available" if self.availability else "Reserved"}"
+
 
 #klasy pochodne
 
-class MiejsceZwykle(MiejscaTeatralne):
-    def __init__(self,numer,cena):
-        super().__init__(numer, cena)
+class RegularSeats(TheaterSeats):
+    def __init__(self,number,price,availability):
+        super().__init__(number, price, availability)
 
 
-class MiejsceVIP(MiejscaTeatralne):
-    def __init__(self,numer,cena,oplata_dodatkowa,udogodnieniaVIP):
-        super().__init__(numer, cena + oplata_dodatkowa)
-        self.oplata_dodatkowa = oplata_dodatkowa
-        self.udogodnieniaVIP = udogodnieniaVIP
+class VIPSeats(TheaterSeats):
+    def __init__(self,number,price,availability,extra_fee,VIP_amenities):
+        super().__init__(number, price + extra_fee,availability)
+        self.extra_fee = extra_fee
+        self.VIP_amenities = VIP_amenities
 
 
-class MiejsceDlaNiepelnosprawnych(MiejscaTeatralne):
-    def __init__(self,numer,cena, udogodnienia):
-        super().__init__(numer, cena)
-        self.udogodnienia = udogodnienia
+class HandicapSeats(TheaterSeats):
+    def __init__(self,number,price,availability, amenities):
+        super().__init__(number, price,availability)
+        self.amenities = amenities
+
+    def __str__(self):
+        return super().__str__() + f", Amenities: {self.amenities}"
 
 #klasa Teatr
 
-class Teatr:
+class Theater:
     def __init__(self):
-        self.miejsce = []
+        self.seat = []
+        self.rezervasion = {}
 
-    def dodanie_miejsca(self,miejsce):
-        self.miejsce.append(miejsce)
 
-    def pokaz_wolne_miejsca(self):
-        return [miejsce for miejsce in self.miejsce if miejsce.dostepnosc]
+    def add_seat (self,miejsce):
+        self.seat.append(miejsce)
 
-    def rezerwacja_miejsca(self, numer, Klient):
-        for miejsce in self.miejsce:
-            if miejsce == numer:
-                return miejsce.zarezrwuj(Klient)
+    def show_free_seats (self):
+        return [booking for booking in self.seat if booking.availability]
+
+    def seat_reservation(self, number, customer):
+        for booking in self.seat:
+            if booking.number == number and booking.availability:
+                booking.availability = False
+                if customer.id not in self.rezervasion:
+                    self.rezervasion[customer.id] = []
+                self.rezervasion[customer.id].append(booking)
+                return True
         return False
 
-    def anulowanie_rezerwacji(self,numer):
-        for miejsce in self.miejsce:
-            if miejsce.numer == numer:
-                return miejsce.anulowanie_rezerwacji()
+    def seat_cancellation(self,number, customer):
+        if customer.id in self.rezervasion:
+            for booking in self.rezervasion[customer.id]:
+                if booking.number == number:
+                    booking.availability = True
+                    self.rezervasion[customer.id].remove(booking)
+                    return True
         return False
+
+    def history_reservation(self,customer):
+        if customer.id in self.rezervasion:
+            return self.rezervasion[customer.id]
+        return []
+
 
 #Klasa Klient
 
-class Klient:
-    def __init__(self, id, imie, nazwisko):
+class Customer:
+    def __init__(self, id, name, surname):
         self.id = id
-        self.imie = imie
-        self.nazwisko = nazwisko
-        self.lista_rezerwacji = []
-
-    def dodaj_rezerwacje(self,miejsce):
-        self.lista_rezerwacji.append(miejsce)
-
-    def usuwanie_rezerwacji(self, miejsce):
-        self.lista_rezerwacji.remove(miejsce)
-
-    def pokaz_liste_rezerwacji(self):
-        return self.lista_rezerwacji
-
-teatr = Teatr()
-
-teatr.dodanie_miejsca(MiejsceZwykle(1,50))
-teatr.dodanie_miejsca(MiejsceZwykle(2,50))
-teatr.dodanie_miejsca(MiejsceZwykle(3,50))
-teatr.dodanie_miejsca(MiejsceZwykle(4,50))
-teatr.dodanie_miejsca(MiejsceZwykle(5,50))
-teatr.dodanie_miejsca(MiejsceZwykle(6,50))
-teatr.dodanie_miejsca(MiejsceZwykle(7,50))
-teatr.dodanie_miejsca(MiejsceZwykle(8,50))
-teatr.dodanie_miejsca(MiejsceZwykle(9,50))
-teatr.dodanie_miejsca(MiejsceZwykle(10,50))
-
-teatr.dodanie_miejsca(MiejsceVIP(11,50,50,"Napój + popcorn, wiecej miejsca"))
-teatr.dodanie_miejsca(MiejsceVIP(12,50,50,"Napój + popcorn, wiecej miejsca"))
-teatr.dodanie_miejsca(MiejsceVIP(13,50,50,"Napój + popcorn, wiecej miejsca"))
-teatr.dodanie_miejsca(MiejsceVIP(14,50,50,"Napój + popcorn, wiecej miejsca"))
-teatr.dodanie_miejsca(MiejsceVIP(15,50,50,"Napój + popcorn, wiecej miejsca"))
-
-teatr.dodanie_miejsca(MiejsceDlaNiepelnosprawnych(16,30,"wiecej miejsca, bliżej wejścia"))
-teatr.dodanie_miejsca(MiejsceDlaNiepelnosprawnych(17,30,"wiecej miejsca, bliżej wejścia"))
-teatr.dodanie_miejsca(MiejsceDlaNiepelnosprawnych(18,30,"wiecej miejsca, bliżej wejścia"))
-teatr.dodanie_miejsca(MiejsceDlaNiepelnosprawnych(19,30,"wiecej miejsca, bliżej wejścia"))
-teatr.dodanie_miejsca(MiejsceDlaNiepelnosprawnych(20,30,"wiecej miejsca, bliżej wejścia"))
-
-Klient1 = Klient(1969,"Monthy","Python")
-Klient2 = Klient(1998,"Karol","Krawczyk")
+        self.name = name
+        self.surname = surname
 
 
-teatr.rezerwacja_miejsca(10, Klient1)
-teatr.rezerwacja_miejsca(12, Klient2)
+    def __str__(self):
+        return f"Customer's ID {self.id}, Name:{self.name} Surname:{self.surname}"
 
-for miejsce in teatr.pokaz_wolne_miejsca():
+
+theater = Theater()
+
+theater.add_seat(RegularSeats(1,50,True))
+theater.add_seat(RegularSeats(2,50,True))
+theater.add_seat(RegularSeats(3,50,True))
+theater.add_seat(RegularSeats(4,50,True))
+theater.add_seat(RegularSeats(5,50,True))
+theater.add_seat(RegularSeats(6,50,True))
+theater.add_seat(RegularSeats(7,50,True))
+theater.add_seat(RegularSeats(8,50,True))
+theater.add_seat(RegularSeats(9,50,True))
+theater.add_seat(RegularSeats(10,50,True))
+
+theater.add_seat(VIPSeats(11,50,True,50,"Drink + popcorn, more space"))
+theater.add_seat(VIPSeats(12,50,True,50,"Drink + popcorn, more space"))
+theater.add_seat(VIPSeats(13,50,True,50,"Drink + popcorn, more space"))
+theater.add_seat(VIPSeats(14,50,True,50,"Drink + popcorn, more space"))
+theater.add_seat(VIPSeats(15,50,True,50,"Drink + popcorn, more space"))
+
+theater.add_seat(HandicapSeats(16,30,True,"more space, closer to exit"))
+theater.add_seat(HandicapSeats(17,30,True,"more space, closer to exit"))
+theater.add_seat(HandicapSeats(18,30,True,"more space, closer to exit"))
+theater.add_seat(HandicapSeats(19,30,True,"more space, closer to exit"))
+theater.add_seat(HandicapSeats(20,30,True,"more space, closer to exit"))
+
+#utworzenie klienta
+Customer1 = Customer(1969,"Monthy","Python")
+Customer2 = Customer(1998,"Karol","Krawczyk")
+
+available_seats = theater.show_free_seats()
+for miejsce in available_seats:
     print(miejsce)
 
-for miejsce in Klient1.pokaz_liste_rezerwacji():
-    print(miejsce)
+#Rezerwacja
+theater.seat_reservation(10, Customer1)
+theater.seat_reservation(12, Customer2)
+
+history = theater.history_reservation(Customer1)
+for booking in history:
+    print(booking)
+
+history = theater.history_reservation(Customer2)
+for booking in history:
+    print(booking)
+
